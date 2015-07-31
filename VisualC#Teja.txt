@@ -1,0 +1,279 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
+{
+	InitializeComponent();
+}
+private bool mouse_down = false;
+private Bitmap bit = new Bitmap("C:\Users\tejasaip24\Pictures\Model1.bmp");
+private Color col = Color.Black;
+
+private void panel1_MouseDown(object sender, MouseEventArgs e)
+{
+	mouse_down = true;
+}
+
+private void panel1_MouseUp(object sender, MouseEventArgs e)
+{
+	mouse_down = false;
+}
+
+private void panel1_MouseMove(object sender, MouseEventArgs e)
+	{
+	toolStripStatusLabel1.Text = e.X + "," + e.Y;
+	if (mouse_down == true)
+		{
+			bit = new Bitmap(bit, panel1.Size);
+			panel1.BackgroundImage = bit;
+			bit.SetPixel(e.X, e.Y, col);
+		}
+	}
+private void button1_Click(object sender, EventArgs e)
+	{
+		colorDialog1.ShowDialog();
+		col = colorDialog1.Color;
+	}
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
+using Camera;
+using System.IO;
+
+namespace Part#1
+{
+public partial class Form1 : Form
+{
+private PointPairList m_pointPairList;
+//CSV Writer
+private StreamWriter m_CSVWriter;
+
+public Form1()
+{
+InitializeComponent();
+CreateGraph();
+SetSize();
+
+//csv
+CameraControl.ContextMenuBuilder +=
+new CameraControl.ContextMenuBuilderEventHandler(MyContextMenuBuilder);
+}
+
+private void CreateGraph()
+{
+GraphPane myPane = CameraControl.GraphPane;
+
+// Set the titles and axis labels
+myPane.Title.Text = “Camera Test”;
+myPane.XAxis.Title.Text = “theta (angle)”;
+myPane.YAxis.Title.Text = “Sin (theta)”;
+
+// Make up some data points from the Sine function
+m_pointPairList = new PointPairList();
+for (double x = 0; x <= 360; x += 10)
+{
+double y = Math.Sin(x * Math.PI / 180.0);
+
+m_pointPairList.Add(x, y);
+}
+// Generate a blue curve with Plus symbols,
+LineItem _myCurve1 = myPane.AddCurve("Sin (theta)",
+m_pointPairList, Color.Blue, SymbolType.Plus);
+
+// Fill the pane background with a color gradient
+myPane.Fill = new Fill(Color.White, Color.FromArgb(220, 220, 255), 45F);
+
+//Make the MajorGrids of Axes visible
+myPane.XAxis.MajorGrid.IsVisible = true;
+myPane.YAxis.MajorGrid.IsVisible = true;
+
+// Calculate the Axis Scale Ranges
+CameraControl.AxisChange();
+}
+
+private void Form1_Resize(object sender, EventArgs e)
+{
+SetSize();
+}
+
+private void SetSize()
+{
+Camera.Location = new Point(10, 10);
+Camera.Size = new Size(this.ClientRectangle.Width - 20,
+this.ClientRectangle.Height - 20);
+}
+
+private void MyContextMenuBuilder(CameraControl control,
+ContextMenuStrip menuStrip, Point mousePt,
+CameraControl.ContextMenuObjectState objState)
+{
+ToolStripMenuItem _item = new ToolStripMenuItem();
+_item.Name = "Export Data as CSV";
+_item.Tag = "export_data_csv";
+_item.Text = "Export Data as CSV";
+_item.Click += new System.EventHandler(ShowSaveAsForExportCSV);
+menuStrip.Items.Insert(2, _item);
+}
+
+private void ShowSaveAsForExportCSV(object sender, System.EventArgs e)
+{
+try
+{
+saveFileDialog1.Filter = "CSV files (*.csv)|*.csv";
+saveFileDialog1.ShowDialog();
+m_CSVWriter = new StreamWriter(saveFileDialog1.FileName);
+WriteCSVToStream();
+m_CSVWriter.Close();
+MessageBox.Show("CSV File Saved", " Camera ", MessageBoxButtons.OK);
+}
+catch (Exception ex)
+{
+m_CSVWriter.Close();
+MessageBox.Show(ex.ToString());
+}
+}
+
+private void WriteCSVToStream()
+{
+//Used Graph to compare orientation/position of Individual Parts of Camera
+string _xAxisHeader = CheckCSVString(CameraControl.GraphPane.XAxis.Title.Text);
+string _yAxisHeader = CheckCSVString(CameraControl.GraphPane.YAxis.Title.Text);
+m_CSVWriter.Write(_xAxisHeader + "," + _yAxisHeader + "n");
+
+for (int i = 0; i < m_pointPairList.Count; i++)
+{
+m_CSVWriter.Write(m_pointPairList[i].X + "," + m_pointPairList[i].Y + "n");
+}
+}
+
+private string CheckCSVString(string _string)
+{
+string _returnString = _string;
+if (_string.IndexOfAny("",x0Ax0D".ToCharArray()) > -1)
+{
+_returnString = “”" + _string.Replace(“”", “”"”) + “”";
+}
+return _returnString;
+}
+
+}
+}
+
+void CTestDlg::OnBnClickedButton1()
+{
+    CLSID             AppClsid;
+    CComPtr<IUnknown> AppUnk = NULL;
+ 
+    // get application
+    if (FAILED(::CLSIDFromProgID(L"Inventor.Application", &AppClsid)))
+        return;
+ 
+    if (FAILED(::GetActiveObject(AppClsid, NULL, &AppUnk)))
+        return;
+ 
+    CComQIPtr<Application> App = AppUnk;
+ 
+    AppUnk = NULL;
+ 
+    
+    CComPtr<Transaction> Txn1 = NULL;
+ 
+    try
+    {
+        
+        CComPtr<Document> Doc = App->GetActiveDocument();
+       
+        
+        CComQIPtr<AssemblyDocument> AssDoc = Doc;
+ 
+        
+        CComPtr<TransactionManager> TxnMgr = App->GetTransactionManager();
+ 
+        
+        Txn1 = TxnMgr->StartTransaction(Doc, L"My Command");
+ 
+        
+        CComPtr<AssemblyComponentDefinition> pCompDef;
+        AssDoc->get_ComponentDefinition(&pCompDef);
+       
+        
+        CComPtr<ComponentOccurrences> compOccurrences;
+        pCompDef->get_Occurrences(&compOccurrences);
+ 
+        
+        CComPtr<TransientGeometry> pTransGeom = App->GetTransientGeometry();
+        CComPtr<Matrix> pNewTransform = pTransGeom->CreateMatrix();
+ 
+        // create a safearray for the strings
+        BSTR strBSTR[3] =
+        {
+                CString("10 cm").AllocSysString(),
+                CString("20 cm").AllocSysString(),
+                CString("30 cm").AllocSysString()
+        };
+ 
+        COleSafeArray oleSafeArray;
+        oleSafeArray.CreateOneDim(VT_BSTR, 3, strBSTR);
+ 
+        
+        compOccurrences->AddCustomiPartMember(
+            "C:\\Temp\\Prosthetic.ipt",
+            pNewTransform,
+            "C:\\Temp\\Prosthetic1.ipt",
+            CComVariant(1),
+            oleSafeArray);
+       
+        
+        Txn1->End();
+        return;
+    }
+    catch (...)
+    {
+        if (Txn1 != NULL)
+            Txn1->Abort();
+       
+        AfxMessageBox(L"Could not create iPart member!");
+    }
+}
+
+<!DOCTYPE html>
+<html>
+<head>   
+   <title>WinWebApp1</title>
+   <!-- WinJS references -->
+   <link rel="stylesheet" href="/winjs/css/ui-dark.css" />
+   <script src="/winjs/js/base.js"></script>
+   <script src="/winjs/js/wwaapp.js"></script>
+   <!-- WinWebApp1 references -->
+   <link rel="stylesheet" href="/css/default.css" />
+    
+   <script type = "text/javascript" >
+
+   // Takes a photo using the default JPEG format.
+   function takepicture() {
+      var captureUI = new Windows.Media.Capture.CameraCaptureUI();
+      captureUI.captureFileAsync(Windows.Media.Capture.CameraCaptureUIMode.photo).then(function (capturedItem) {
+         if (capturedItem) {
+             document.getElementById("message").innerHTML = "<Insert Blueprint>."
+         }
+         else {
+             document.getElementById("message").innerHTML = "<Insert description>"
+         }
+      });
+   }
+   </script>
+</head>
+<body>
+   <input type="button" onclick="takepicture()" value="Take a Picture" /><br />
+   <span id="message"></span>
+</body>
+</html>
